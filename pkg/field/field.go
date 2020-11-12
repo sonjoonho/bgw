@@ -14,6 +14,11 @@ type Field struct {
 	Prime int
 }
 
+func New(prime int, seed int64) Field {
+	rand.Seed(seed)
+	return Field{Prime: prime}
+}
+
 // Mod implements the modulus function for Prime. Note that unlike some other languages the % operator implements
 // remainder, which can return a negative value.
 func (f Field) Mod(a int) int {
