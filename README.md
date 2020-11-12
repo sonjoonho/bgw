@@ -1,14 +1,14 @@
 # Privacy Engineering Coursework
 Implementation of the BGW MPC protocol in Go.
 
-## Project Structure
+## Getting Started
 
-```
-cmd/
-    mpc/
-pkg/
-    internal/
-        field/
+On a CSG machines, Go 1.15 is available at `/vol/linux/apps/go/bin/go`. If, for some reason, this doesn't work then Go
+ 1.14.3 should be installed at `/usr/lib/go-1.14/bin/go`. Below we will assume the `go` binary is on your path already. 
+
+Run with 
+```sh
+go run cmd/mpc/mpc.go 
 ```
 
 ## Authors
