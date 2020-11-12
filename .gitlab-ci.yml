@@ -1,12 +1,13 @@
 image: golang:latest
 
 variables:
-  REPO_NAME: gitlab.doc.ic.ac.uk/js6317/bgw
+  PROJECT: bgw
 
 before_script:
-  - mkdir -p $GOPATH/src/$(dirname $REPO_NAME)
-  - ln -svf $CI_PROJECT_DIR $GOPATH/src/$REPO_NAME
-  - cd $GOPATH/src/$REPO_NAME
+  - mkdir -p $GOPATH/src $GOPATH/src/_/builds
+  - cp -r $CI_PROJECT_DIR $GOPATH/src/$PROJECT
+  - ln -s $GOPATH/src $GOPATH/src/_/builds
+  - cd $GOPATH/src/$PROJECT
 
 stages:
   - test
@@ -15,9 +16,9 @@ stages:
 format:
   stage: test
   script:
-    - go fmt $(go list ./... | grep -v /vendor/)
-    - go vet $(go list ./... | grep -v /vendor/)
-    - go test -race $(go list ./... | grep -v /vendor/)
+    - go fmt ./...
+    - go vet ./...
+    - go test -race ./...
 
 compile:
   stage: build
