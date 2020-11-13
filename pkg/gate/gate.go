@@ -7,4 +7,6 @@ type Gate interface {
 	NextGate() int
 	// Output computes the output of this gate.
 	Output(x, y int) int
+	// Copy returns a deep copy of this Gate.
+	Copy() Gate
 }

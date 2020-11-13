@@ -27,3 +27,17 @@ func (c *Circuit) NParties() int {
 func (c *Circuit) NGates() int {
 	return len(c.gates)
 }
+
+// Copy makes a deep copy of this Circuit.
+func (c *Circuit) Copy() *Circuit {
+	inputsCopy := make([]int, len(c.inputs), len(c.inputs))
+	copy(inputsCopy, c.inputs)
+
+	gatesCopy := make([]gate.Gate, len(c.gates), len(c.gates))
+	copy(gatesCopy, c.gates)
+
+	return &Circuit{
+		inputs: inputsCopy,
+		gates:  gatesCopy,
+	}
+}

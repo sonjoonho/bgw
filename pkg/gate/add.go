@@ -20,7 +20,16 @@ func (a *Add) NextGate() int {
 	return a.next
 }
 
-// Output computes the output of this gate.
+// Output computes the output of this Add gate.
 func (a *Add) Output(x, y int) int {
 	return a.field.Add(x, y)
+}
+
+//
+func (a *Add) Copy() Gate {
+	return &Add{
+		next: a.next,
+		// field is a value struct, so no deep copy function is needed.
+		field: a.field,
+	}
 }
