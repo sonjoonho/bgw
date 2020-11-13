@@ -42,7 +42,8 @@ func main() {
 	// Initialise each party.
 	parties := make([]*party.Party, nParties, nParties)
 	for i := 0; i < nParties; i++ {
-		p := party.New(i, cfg.Secrets[i], cfg.Circuit, cfg.Field)
+		// Note that cfg.Circuit is copied, and the rest of the parameters are values so parties do not share memory.
+		p := party.New(i, cfg.Secrets[i], cfg.Circuit.Copy(), cfg.Field)
 		parties[i] = p
 	}
 
