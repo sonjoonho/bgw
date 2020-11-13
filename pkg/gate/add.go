@@ -1,6 +1,6 @@
 package gate
 
-import "bgw/pkg/field"
+import "gitlab.doc.ic.ac.uk/js6317/bgw/pkg/field"
 
 // Add is an arithmetic addition gate.
 type Add struct {

@@ -1,7 +1,7 @@
 // Package circuit contains the representation of a circuit.
 package circuit
 
-import "bgw/pkg/gate"
+import "gitlab.doc.ic.ac.uk/js6317/bgw/pkg/gate"
 
 // Circuit represents an arithmetic circuit to be computed by parties.
 type Circuit struct {

@@ -1,9 +1,9 @@
 package main
 
 import (
-	"bgw/pkg/config"
-	"bgw/pkg/party"
 	"flag"
+	"gitlab.doc.ic.ac.uk/js6317/bgw/pkg/config"
+	"gitlab.doc.ic.ac.uk/js6317/bgw/pkg/party"
 	"log"
 	"os"
 	"sync"
