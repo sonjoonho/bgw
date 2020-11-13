@@ -2,10 +2,10 @@
 package party
 
 import (
-	"bgw/pkg/circuit"
-	"bgw/pkg/field"
-	"bgw/pkg/poly"
 	"fmt"
+	"gitlab.doc.ic.ac.uk/js6317/bgw/pkg/circuit"
+	"gitlab.doc.ic.ac.uk/js6317/bgw/pkg/field"
+	"gitlab.doc.ic.ac.uk/js6317/bgw/pkg/poly"
 	"log"
 	"os"
 	"sync"

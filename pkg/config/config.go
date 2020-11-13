@@ -2,9 +2,9 @@
 package config
 
 import (
-	"bgw/pkg/circuit"
-	"bgw/pkg/field"
-	"bgw/pkg/gate"
+	"gitlab.doc.ic.ac.uk/js6317/bgw/pkg/circuit"
+	"gitlab.doc.ic.ac.uk/js6317/bgw/pkg/field"
+	"gitlab.doc.ic.ac.uk/js6317/bgw/pkg/gate"
 	"log"
 	"os"
 	"time"

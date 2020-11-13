@@ -1,7 +1,7 @@
 // Package poly provides a simple implementation of polynomials.
 package poly
 
-import "bgw/pkg/field"
+import "gitlab.doc.ic.ac.uk/js6317/bgw/pkg/field"
 
 // Poly is a polynomial.
 type Poly struct {
