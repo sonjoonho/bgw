@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"gitlab.doc.ic.ac.uk/js6317/bgw/pkg/circuit"
 	"gitlab.doc.ic.ac.uk/js6317/bgw/pkg/field"
+	"gitlab.doc.ic.ac.uk/js6317/bgw/pkg/gate"
 	"gitlab.doc.ic.ac.uk/js6317/bgw/pkg/poly"
 	"log"
 	"os"
@@ -19,7 +20,7 @@ type message struct {
 
 // Party is a party which can communicate with other parties.
 type Party struct {
-	// id is the index of this Party.
+	// id is the identifier of this Party. It starts from 0.
 	id int
 	// secret is...
 	secret int
@@ -41,8 +42,8 @@ type Party struct {
 // New initialises and returns a new Party. nParties specifies the number of parties participating in the protocol,
 // and nGates specifies the number of gates in the circuit.
 func New(id int, secret int, circuit *circuit.Circuit, field field.Field) *Party {
-	nParties := circuit.NParties()
-	nGates := circuit.NGates()
+	nParties := circuit.NParties
+	nGates := circuit.NGates
 
 	p := &Party{
 		id:      id,
@@ -57,7 +58,11 @@ func New(id int, secret int, circuit *circuit.Circuit, field field.Field) *Party
 
 	// Initialise nested slices of shares.
 	for i := 0; i < nParties; i++ {
-		p.shares[i] = make([]int, nGates+1)
+		pShares := make([]int, nGates+1)
+		for j := 0; j < nGates+1; j++ {
+			pShares[j] = -1
+		}
+		p.shares[i] = pShares
 	}
 
 	return p
@@ -94,8 +99,8 @@ func (p *Party) RecvShare() *message {
 func (p *Party) Run(wg *sync.WaitGroup) {
 	p.logger.Println("Running...")
 
-	nParties := p.circuit.NParties()
-	nGates := p.circuit.NGates()
+	nParties := p.circuit.NParties
+	nGates := p.circuit.NGates
 
 	// 1. Split secret and share.
 	//	  Each party generates a random polynomial with the 0th degree term as the secret. This polynomial needs to be
@@ -124,8 +129,48 @@ func (p *Party) Run(wg *sync.WaitGroup) {
 	// 2. Run circuit.
 	//    We iterate over all the gates in the circuit and wait for the inputs from the source gate, and then run the
 	//    gate computation on the shares that we have. Then broadcast those shares.
+	gates := traverse(p.circuit)
+	for _, g := range gates {
+		p.logger.Printf("Processing gate %#v...\n", g)
+		switch v := g.(type) {
+		case *gate.Input:
+			v.Share = p.shares[v.Party][0]
+			p.logger.Printf("Input: %d\n", v.Output())
+		case *gate.Add:
+			p.logger.Printf("Add: %d\n", v.Output())
+		}
+	}
 
 	// 3. Create final result.
 
 	wg.Done()
+}
+
+// traverse performs an iterative post-order traversal of the circuit's gates.
+func traverse(circuit *circuit.Circuit) []gate.Gate {
+	stack := []gate.Gate{circuit.Root}
+	var res []gate.Gate
+
+	for len(stack) > 0 {
+		var next gate.Gate
+		stack, next = pop(stack)
+		res = append([]gate.Gate{next}, res...)
+		if next.First() != nil {
+			stack = append(stack, next.First())
+		}
+		if next.Second() != nil {
+			stack = append(stack, next.Second())
+		}
+	}
+
+	return res
+}
+
+func peek(stack []gate.Gate) gate.Gate {
+	return stack[len(stack)-1]
+}
+
+func pop(stack []gate.Gate) ([]gate.Gate, gate.Gate) {
+	g := peek(stack)
+	return stack[0 : len(stack)-1], g
 }

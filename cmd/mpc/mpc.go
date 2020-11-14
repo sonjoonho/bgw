@@ -37,7 +37,7 @@ func main() {
 
 	logger.Printf("Running circuit %d: %+v", circuitNumber, cfg)
 
-	nParties := cfg.Circuit.NParties()
+	nParties := cfg.Circuit.NParties
 
 	// Initialise each party.
 	parties := make([]*party.Party, nParties, nParties)

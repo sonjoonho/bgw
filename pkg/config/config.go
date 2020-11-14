@@ -34,22 +34,29 @@ func New(prime int, seed int64, defaultSeed int64, circuit int) *Config {
 	}
 
 	// Validation
-	if len(cfg.Secrets) != cfg.Circuit.NParties() {
+	if len(cfg.Secrets) != cfg.Circuit.NParties {
 		logger.Fatalf("Length mismatch between number of secrets and number of parties.")
 	}
 
 	return cfg
 }
 
-func config1(fld field.Field) *Config {
+func config1(field field.Field) *Config {
 	return &Config{
-		Secrets: []int{5, 28},
-		Field:   fld,
-		Circuit: circuit.New(
-			[]int{0, 0},
-			[]gate.Gate{
-				gate.NewAdd(1, fld),
-			},
-		),
+		Secrets: []int{5, 28, 6},
+		Field:   field,
+		Circuit: &circuit.Circuit{
+			Root: gate.NewAdd(
+				&gate.Input{Party: 0},
+				gate.NewAdd(
+					&gate.Input{Party: 1},
+					&gate.Input{Party: 2},
+					field,
+				),
+				field,
+			),
+			NParties: 3,
+			NGates:   2,
+		},
 	}
 }
