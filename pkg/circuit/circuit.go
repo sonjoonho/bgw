@@ -3,11 +3,14 @@ package circuit
 
 import "gitlab.doc.ic.ac.uk/js6317/bgw/pkg/gate"
 
-// Circuit represents an arithmetic circuit to be computed by parties.
+// Circuit represents an arithmetic circuit to be computed by parties. It is not thread safe -- each Goroutine should be
+// given a copy.
 type Circuit struct {
 	Root     gate.Gate
 	NParties int
-	NGates   int
+	// gates are the gates of this circuit, ordered linearly in the order which they should be processed. It is lazily
+	// initialised.
+	gates []gate.Gate
 }
 
 // Copy makes a deep copy of this Circuit.
@@ -15,6 +18,48 @@ func (c *Circuit) Copy() *Circuit {
 	return &Circuit{
 		Root:     c.Root.Copy(),
 		NParties: c.NParties,
-		NGates:   c.NGates,
 	}
+}
+
+// Gate returns the gate for index i. If the order of of gates has not been determined, we run Traverse.
+func (c *Circuit) Gate(i int) gate.Gate {
+	if c.gates == nil {
+		c.gates = c.Traverse()
+	}
+	return c.gates[i]
+}
+
+// Traverse traverses the circuit and returns the gates in order. This must be deterministic so that each party receives gates with matching indexes.
+func (c *Circuit) Traverse() []gate.Gate {
+	if c.gates != nil {
+		return c.gates
+	}
+
+	stack := []gate.Gate{c.Root}
+	var res []gate.Gate
+
+	for len(stack) > 0 {
+		var next gate.Gate
+		stack, next = pop(stack)
+		res = append([]gate.Gate{next}, res...)
+		if next.First() != nil {
+			stack = append(stack, next.First())
+		}
+		if next.Second() != nil {
+			stack = append(stack, next.Second())
+		}
+	}
+
+	c.gates = res
+
+	return res
+}
+
+func peek(stack []gate.Gate) gate.Gate {
+	return stack[len(stack)-1]
+}
+
+func pop(stack []gate.Gate) ([]gate.Gate, gate.Gate) {
+	g := peek(stack)
+	return stack[0 : len(stack)-1], g
 }

@@ -52,10 +52,10 @@ func (f Field) Pow(a, b int) int {
 	r := 1
 	for b > 0 {
 		if b&1 != 0 {
-			r *= a
+			r = f.Mul(r, a)
 		}
 		b >>= 1
-		a *= a
+		a = f.Mul(a, a)
 	}
 	return f.Mod(r)
 }

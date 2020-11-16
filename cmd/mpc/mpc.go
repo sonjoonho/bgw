@@ -47,14 +47,26 @@ func main() {
 		parties[i] = p
 	}
 
+	results := make([]int, nParties, nParties)
 	// Start protocol.
 	var wg sync.WaitGroup
-	for _, p := range parties {
+	for i, p := range parties {
 		p.SubscribeAll(parties)
 		wg.Add(1)
-		go p.Run(&wg)
+		go runParty(i, results, p, &wg)
 	}
 
 	// Block until all parties have finished.
 	wg.Wait()
+
+	for _, r := range results {
+		if r != results[0] {
+			logger.Fatalf("Protcol failed: return values do not match.")
+		}
+	}
+	logger.Printf("Output: %d", results[0])
+}
+
+func runParty(i int, results []int, p *party.Party, wg *sync.WaitGroup) {
+	results[i] = p.Run(wg)
 }
