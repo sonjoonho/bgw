@@ -196,6 +196,11 @@ func TestField_Div(t *testing.T) {
 		b:    20,
 		p:    11,
 		want: 7,
+	}, {
+		a:    2,
+		b:    100,
+		p:    101,
+		want: 99,
 	}}
 
 	for _, tc := range tests {

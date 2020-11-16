@@ -11,6 +11,23 @@ Run with
 go run cmd/mpc/mpc.go 
 ```
 
+## Details
+
+### Circuit Definition
+
+TODO(sonjoonho)
+
+### Party Communication
+
+Parties are indexed from 0.
+
+TODO(sonjoonho)
+
+### Finite Field
+
+We chose not to use `big.Int` for simplicity. Instead, all modular arithmetic functions are implemented in package 
+`field`. 
+
 ## Authors
 * Joon-Ho Son `<js6317>`
 * William George Burr `<wb2117>`

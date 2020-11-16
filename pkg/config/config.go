@@ -29,6 +29,8 @@ func New(prime int, seed int64, defaultSeed int64, circuit int) *Config {
 	switch circuit {
 	case 1:
 		cfg = config1(fld)
+	case 2:
+		cfg = config2(fld)
 	default:
 		logger.Fatalf("Unrecognised circuit number: %d", circuit)
 	}
@@ -40,8 +42,22 @@ func New(prime int, seed int64, defaultSeed int64, circuit int) *Config {
 
 	return cfg
 }
-
 func config1(field field.Field) *Config {
+	return &Config{
+		Secrets: []int{5, 28},
+		Field:   field,
+		Circuit: &circuit.Circuit{
+			Root: gate.NewAdd(
+				&gate.Input{Party: 0},
+				&gate.Input{Party: 1},
+				field,
+			),
+			NParties: 2,
+		},
+	}
+}
+
+func config2(field field.Field) *Config {
 	return &Config{
 		Secrets: []int{5, 28, 6},
 		Field:   field,
@@ -56,7 +72,6 @@ func config1(field field.Field) *Config {
 				field,
 			),
 			NParties: 3,
-			NGates:   2,
 		},
 	}
 }

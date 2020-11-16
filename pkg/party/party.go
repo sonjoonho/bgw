@@ -31,9 +31,8 @@ type Party struct {
 	// subs is a slice of send-only channels that this party uses to send message to subscribers. Its capacity is equal
 	// to the number of parties, specified during initialisation.
 	subs []chan<- *message
-	// shares is a buffer for received shares. It maps from Party id to gate.Gate id to share. The first column contains
-	// the initial share for each party.
-	shares  [][]int
+	// shares is a buffer for received shares. It maps from Party id to gate.Gate to share.
+	shares  []map[gate.Gate]*int
 	field   field.Field
 	circuit *circuit.Circuit
 	logger  *log.Logger
@@ -43,26 +42,21 @@ type Party struct {
 // and nGates specifies the number of gates in the circuit.
 func New(id int, secret int, circuit *circuit.Circuit, field field.Field) *Party {
 	nParties := circuit.NParties
-	nGates := circuit.NGates
 
 	p := &Party{
 		id:      id,
 		secret:  secret,
 		circuit: circuit,
 		field:   field,
-		ch:      make(chan *message, nParties),
+		ch:      make(chan *message, nParties+1),
 		subs:    make([]chan<- *message, nParties, nParties),
-		shares:  make([][]int, nParties, nParties),
-		logger:  log.New(os.Stderr, fmt.Sprintf("Party %d: ", id), 0),
+		shares:  make([]map[gate.Gate]*int, nParties, nParties),
+		logger:  log.New(os.Stderr, fmt.Sprintf("Party %d: ", id), log.Lmicroseconds),
 	}
 
-	// Initialise nested slices of shares.
+	// Initialise slices of shares.
 	for i := 0; i < nParties; i++ {
-		pShares := make([]int, nGates+1)
-		for j := 0; j < nGates+1; j++ {
-			pShares[j] = -1
-		}
-		p.shares[i] = pShares
+		p.shares[i] = make(map[gate.Gate]*int)
 	}
 
 	return p
@@ -81,10 +75,10 @@ func (p *Party) SubscribeAll(parties []*Party) {
 }
 
 // SendShare sends the specified share to another Party.
-func (p *Party) SendShare(to int, share int, srcGate int) {
-	p.logger.Printf("Sending share %d at gate %d to party %d\n", share, to, srcGate)
+func (p *Party) SendShare(to int, share int, gate int) {
+	p.logger.Printf("Sending share %d at gate %d to party %d\n", share, gate, to)
 	ch := p.subs[to]
-	msg := &message{party: p.id, gate: srcGate, share: share}
+	msg := &message{party: p.id, gate: gate, share: share}
 	ch <- msg
 }
 
@@ -96,81 +90,97 @@ func (p *Party) RecvShare() *message {
 }
 
 // Run runs the BGW protocol for this party.
-func (p *Party) Run(wg *sync.WaitGroup) {
+func (p *Party) Run(wg *sync.WaitGroup) int {
 	p.logger.Println("Running...")
 
 	nParties := p.circuit.NParties
-	nGates := p.circuit.NGates
+	//nGates := p.circuit.NGates
 
 	// 1. Split secret and share.
-	//	  Each party generates a random polynomial with the 0th degree term as the secret. This polynomial needs to be
-	//    evaluated for each party to generate shares i.e. P(i) for i in 1..number of parties. Then broadcast shares to
-	//    every other party.
-	coeffs := make([]int, nParties, nParties)
+	//	  Each party generates a random polynomial with the 0th initialDeg term as the secret. This polynomial needs to be
+	//    evaluated for each party to generate shares party.e. P(party) for party in 1..number of parties. Then
+	//    broadcast shares to every other party.
+	coeffs := make([]int, initialDeg(nParties)+1, initialDeg(nParties)+1)
 	coeffs[0] = p.secret
-	for d := 1; d < nParties; d++ {
+	for d := 1; d <= initialDeg(nParties); d++ {
 		coeffs[d] = p.field.Rand()
 	}
 	po := poly.New(coeffs, p.field)
-
-	for i := 1; i <= nParties; i++ {
-		share := po.Eval(i)
-		p.SendShare(i-1, share, 0)
-	}
-
-	// Ensure we have received all initial shares.
-	gateCounts := make([]int, nGates+1, nGates+1)
-	for gateCounts[0] < nParties {
-		msg := p.RecvShare()
-		p.shares[msg.party][msg.gate] = msg.share
-		gateCounts[msg.gate]++
-	}
+	p.logger.Printf("Polynomial: %v", po)
 
 	// 2. Run circuit.
 	//    We iterate over all the gates in the circuit and wait for the inputs from the source gate, and then run the
 	//    gate computation on the shares that we have. Then broadcast those shares.
-	gates := traverse(p.circuit)
-	for _, g := range gates {
-		p.logger.Printf("Processing gate %#v...\n", g)
+	gates := p.circuit.Traverse()
+	for gIdx, g := range gates {
+		p.logger.Printf("Processing gate %d: %#v...\n", gIdx, g)
 		switch v := g.(type) {
 		case *gate.Input:
-			v.Share = p.shares[v.Party][0]
-			p.logger.Printf("Input: %d\n", v.Output())
+			p.processInput(gIdx, v, po, nParties)
 		case *gate.Add:
-			p.logger.Printf("Add: %d\n", v.Output())
+			p.processAdd(v)
+		case *gate.Mul:
+			p.processMul()
 		}
 	}
 
 	// 3. Create final result.
+	outputGate := gates[len(gates)-1]
 
-	wg.Done()
-}
+	// We broadcast our share to all other parties, and receive shares from all other parties.
+	for party := 0; party < nParties; party++ {
+		o := outputGate.Output()
+		p.SendShare(party, o, len(gates)-1)
+	}
 
-// traverse performs an iterative post-order traversal of the circuit's gates.
-func traverse(circuit *circuit.Circuit) []gate.Gate {
-	stack := []gate.Gate{circuit.Root}
-	var res []gate.Gate
-
-	for len(stack) > 0 {
-		var next gate.Gate
-		stack, next = pop(stack)
-		res = append([]gate.Gate{next}, res...)
-		if next.First() != nil {
-			stack = append(stack, next.First())
-		}
-		if next.Second() != nil {
-			stack = append(stack, next.Second())
+	for party := 0; party < nParties; party++ {
+		for p.shares[party][outputGate] == nil {
+			msg := p.RecvShare()
+			p.shares[msg.party][p.circuit.Gate(msg.gate)] = &msg.share
 		}
 	}
 
-	return res
+	terms := make([]int, nParties, nParties)
+	for party := 0; party < nParties; party++ {
+		share := *p.shares[party][outputGate]
+		basis := poly.Recombination(party, initialDeg(nParties), p.field)
+		terms[party] = p.field.Mul(basis, share)
+	}
+	output := p.field.Summation(terms)
+	p.logger.Printf("Output: %d\n", output)
+
+	wg.Done()
+
+	return output
 }
 
-func peek(stack []gate.Gate) gate.Gate {
-	return stack[len(stack)-1]
+func (p *Party) processInput(gateIdx int, gate *gate.Input, po *poly.Poly, nParties int) {
+	if gate.Party == p.id {
+		for party := 0; party < nParties; party++ {
+			i := party + 1
+			share := po.Eval(i)
+			p.shares[party][gate] = &share
+			p.SendShare(party, share, gateIdx)
+		}
+	} else {
+		for p.shares[gate.Party][gate] == nil {
+			msg := p.RecvShare()
+			p.shares[msg.party][p.circuit.Gate(msg.gate)] = &msg.share
+		}
+	}
+	gate.SetOutput(*p.shares[gate.Party][gate])
 }
 
-func pop(stack []gate.Gate) ([]gate.Gate, gate.Gate) {
-	g := peek(stack)
-	return stack[0 : len(stack)-1], g
+func (p *Party) processAdd(gate *gate.Add) {
+	out := gate.Output()
+	gate.SetOutput(out)
+}
+
+func (p *Party) processMul() {
+	// Check if we have the share.
+	// If not, check for messages from other parties.
+}
+
+func initialDeg(nParties int) int {
+	return nParties - 1
 }

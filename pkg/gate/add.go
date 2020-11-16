@@ -8,8 +8,9 @@ type Add struct {
 	first Gate
 	// second is the second input to this gate.
 	second Gate
-	// Field is the Field that we perform arithmetic over.
-	field field.Field
+	// field is the Field that we perform arithmetic over.
+	field  field.Field
+	output int
 }
 
 func NewAdd(first Gate, second Gate, field field.Field) Gate {
@@ -28,9 +29,12 @@ func (g *Add) Second() Gate {
 	return g.second
 }
 
-// Add returns the sum of the inputs First and Second over the field Field.
+func (g *Add) SetOutput(output int) {
+	g.output = output
+}
+
 func (g *Add) Output() int {
-	return g.field.Add(g.First().Output(), g.Second().Output())
+	return g.field.Add(g.first.Output(), g.second.Output())
 }
 
 func (g *Add) Copy() Gate {
@@ -38,6 +42,7 @@ func (g *Add) Copy() Gate {
 		first:  g.first.Copy(),
 		second: g.second.Copy(),
 		// field is a value struct so assignment makes a copy.
-		field: g.field,
+		field:  g.field,
+		output: g.output,
 	}
 }

@@ -5,6 +5,7 @@ package gate
 type Gate interface {
 	First() Gate
 	Second() Gate
+	SetOutput(int)
 	Output() int
 	Copy() Gate
 }
