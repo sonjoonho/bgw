@@ -53,7 +53,10 @@ func main() {
 	for i, p := range parties {
 		p.SubscribeAll(parties)
 		wg.Add(1)
-		go runParty(i, results, p, &wg)
+		go func(i int, p *party.Party) {
+			defer wg.Done()
+			results[i] = p.Run()
+		}(i, p)
 	}
 
 	// Block until all parties have finished.
@@ -65,8 +68,4 @@ func main() {
 		}
 	}
 	logger.Printf("Output: %d", results[0])
-}
-
-func runParty(i int, results []int, p *party.Party, wg *sync.WaitGroup) {
-	results[i] = p.Run(wg)
 }

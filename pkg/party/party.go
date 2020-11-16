@@ -9,7 +9,6 @@ import (
 	"gitlab.doc.ic.ac.uk/js6317/bgw/pkg/poly"
 	"log"
 	"os"
-	"sync"
 )
 
 type message struct {
@@ -90,7 +89,7 @@ func (p *Party) RecvShare() *message {
 }
 
 // Run runs the BGW protocol for this party.
-func (p *Party) Run(wg *sync.WaitGroup) int {
+func (p *Party) Run() int {
 	p.logger.Println("Running...")
 
 	nParties := p.circuit.NParties
@@ -148,8 +147,6 @@ func (p *Party) Run(wg *sync.WaitGroup) int {
 	}
 	output := p.field.Summation(terms)
 	p.logger.Printf("Output: %d\n", output)
-
-	wg.Done()
 
 	return output
 }
