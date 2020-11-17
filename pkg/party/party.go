@@ -11,6 +11,7 @@ import (
 	"os"
 )
 
+// message represents a message used for inter-party communication.
 type message struct {
 	party int
 	gate  int
@@ -21,7 +22,7 @@ type message struct {
 type Party struct {
 	// id is the identifier of this Party. It starts from 0.
 	id int
-	// secret is...
+	// secret is this party's secret.
 	secret int
 	// ch is a channel through which this Party receives messages.
 	ch chan *message
@@ -31,8 +32,10 @@ type Party struct {
 	// to the number of parties, specified during initialisation.
 	subs []chan<- *message
 	// shares is a buffer for received shares. It maps from Party id to gate.Gate to share.
-	shares  []map[gate.Gate]*int
-	field   field.Field
+	shares []map[gate.Gate]*int
+	// field is the field that we perform arithmetic over.
+	field field.Field
+	// circuit is the circuit that this party evaluates.
 	circuit *circuit.Circuit
 	logger  *log.Logger
 }

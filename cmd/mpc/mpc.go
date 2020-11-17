@@ -67,5 +67,15 @@ func main() {
 			logger.Fatalf("Protcol failed: return values do not match.")
 		}
 	}
-	logger.Printf("Output: %d", results[0])
+
+	expected := cfg.Circuit.ComputeExpected(cfg.Secrets)
+	actual := results[0]
+	logger.Printf("Expected output: %d", expected)
+	logger.Printf("Actual output:   %d", actual)
+
+	if expected == actual {
+		logger.Println("Protocol succeeded (:")
+	} else {
+		logger.Println("Protocol failed ):")
+	}
 }
