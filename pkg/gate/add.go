@@ -8,7 +8,7 @@ type Add struct {
 	first Gate
 	// second is the second input to this gate.
 	second Gate
-	// field is the Field that we perform arithmetic over.
+	// field is the field that we perform arithmetic over.
 	field  field.Field
 	output int
 }
