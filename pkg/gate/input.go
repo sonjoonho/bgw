@@ -25,7 +25,7 @@ func (g *Input) Output() int {
 }
 
 func (g *Input) Type() string {
-	return fmt.Sprintf("INPUT(%d)", g.Party)
+	return fmt.Sprintf("IN%d", g.Party)
 }
 
 func (g *Input) Copy() Gate {

@@ -25,14 +25,6 @@ func (c *Circuit) Copy() *Circuit {
 	}
 }
 
-// Gate returns the gate for index i. If the order of of gates has not been determined, we run Traverse.
-func (c *Circuit) Gate(i int) gate.Gate {
-	if c.gates == nil {
-		c.gates = c.Traverse()
-	}
-	return c.gates[i]
-}
-
 // Traverse traverses the circuit and returns the gates in order. This must be deterministic so that each party receives
 //gates with matching indexes.
 func (c *Circuit) Traverse() []gate.Gate {

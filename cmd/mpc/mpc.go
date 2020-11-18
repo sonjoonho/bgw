@@ -45,7 +45,14 @@ func main() {
 
 	nParties := cfg.Circuit.NParties
 
-	logger.Printf("Running circuit %d: %d parties with secrets %v and degree %d", circuitNumber, nParties, cfg.Secrets, cfg.Degree)
+	logger.Println("")
+	logger.Printf("Circuit Configuration")
+	logger.Println("===================================")
+	logger.Printf("  Circuit number:    %d", circuitNumber)
+	logger.Printf("  Number of parties: %d", nParties)
+	logger.Printf("  Secrets:           %v", cfg.Secrets)
+	logger.Printf("  Polynomial degree: %d", cfg.Degree)
+	logger.Println("")
 
 	actual, err := RunProtocol(cfg)
 	if err != nil {

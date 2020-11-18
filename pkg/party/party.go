@@ -34,13 +34,16 @@ type Party struct {
 	// to the number of parties, specified during initialisation.
 	subs []chan<- *message
 	// shares is a buffer for received shares. It maps from Party id to gate.Gate to share.
-	shares []map[gate.Gate]*int
+	shares []map[int]*int
 	// field is the field that we perform arithmetic over.
 	field field.Field
 	// circuit is the circuit that this party evaluates.
 	circuit *circuit.Circuit
 	// degree is the degree of the polynomial in Shamir Secret Sharing.
 	degree int
+	// logIndentLevel tracks the indentation level for logging.
+	logIndentLevel int
+	// logger is the logger for this party.
 	logger *log.Logger
 }
 
@@ -56,14 +59,14 @@ func New(id int, secret int, circuit *circuit.Circuit, field field.Field, degree
 		field:   field,
 		ch:      make(chan *message, nParties+1),
 		subs:    make([]chan<- *message, nParties, nParties),
-		shares:  make([]map[gate.Gate]*int, nParties, nParties),
+		shares:  make([]map[int]*int, nParties, nParties),
 		degree:  degree,
-		logger:  log.New(os.Stdout, fmt.Sprintf("Party %d: ", id), log.Lmicroseconds),
+		logger:  log.New(os.Stdout, fmt.Sprintf("%03d: ", id), log.Lmicroseconds),
 	}
 
 	// Initialise slices of shares.
 	for i := 0; i < nParties; i++ {
-		p.shares[i] = make(map[gate.Gate]*int)
+		p.shares[i] = make(map[int]*int)
 	}
 
 	return p
@@ -96,40 +99,46 @@ func (p *Party) RecvShare() *message {
 
 // Run runs the BGW protocol for this party.
 func (p *Party) Run() int {
-	p.logger.Printf("Running with secret %d\n", p.secret)
+	p.logger.Printf("Running party %d with secret %d", p.id, p.secret)
+	p.logger.Println("===================================")
 
-	// 2. Run circuit.
-	//    We iterate over all the gates in the circuit and wait for the inputs from the source gate, and then run the
-	//    gate computation on the shares that we have. Then broadcast those shares.
+	// 2. Run circuit. Note that in this implementation, the initial sharing phase is done every time an input gate is
+	// 	  encountered, not all at once.
 	gates := p.circuit.Traverse()
-	// After a each iteration of this loop, the value of g.Output() must be set.
 	for gIdx, g := range gates {
 		switch v := g.(type) {
 		case *gate.Input:
+			p.logIndentLevel = 0
 			p.processInput(gIdx, v)
 		case *gate.Add:
+			p.logIndentLevel += 2
 			p.processAdd(gIdx, v)
 		case *gate.Mul:
+			p.logIndentLevel += 2
 			p.processMul(gIdx, v)
 		}
 	}
 
+	p.logIndentLevel += 2
+
 	// 3. Create final result. The final gate will always be the output gate.
-	outputGate := gates[len(gates)-1]
-	output := p.processOutput(len(gates)-1, outputGate)
+	outputGateIdx := len(gates) - 1
+	outputGate := gates[outputGateIdx]
+	output := p.processOutput(outputGateIdx, outputGate)
+
+	p.logger.Printf("  Party %d finished with output %d", p.id, output)
+	p.logger.Println()
 
 	return output
 }
 
 func (p *Party) processInput(gateIdx int, gate *gate.Input) {
-	gatePrefix := fmt.Sprintf("[%d | %s]", gateIdx, gate.Type())
-
+	gatePrefix := p.gatePrefix(gateIdx, gate.Type())
 	nParties := p.circuit.NParties
 
 	// 1. Split secret and share.
-	//	  Each party generates a random polynomial with the 0th initialDeg term as the secret. This polynomial needs to
-	//	  be evaluated for each party to generate shares party.e. P(party) for party in 1..number of parties. Then
-	//    broadcast shares to every other party.
+	//	  Each party generates a random polynomial with the 0th degree term as the secret. This polynomial needs to
+	//	  be evaluated for each party to generate shares. Then these are broadcast to every other party.
 
 	// If this gate is an input corresponding to this party, we want to send shares to all parties (including itself).
 	// Otherwise, we want to receive shares from all other parties.
@@ -140,13 +149,14 @@ func (p *Party) processInput(gateIdx int, gate *gate.Input) {
 		sentShares := make([]int, nParties, nParties)
 		p.logger.Printf("%s using polynomial %s", gatePrefix, po)
 
+		// Evaluate P(0) and broadcast to each party.
 		for party := 0; party < nParties; party++ {
 			i := party + 1
 			share := po.Eval(i)
 			if party != p.id {
 				p.SendShare(party, share, gateIdx)
 			} else {
-				p.shares[party][gate] = &share
+				p.shares[party][gateIdx] = &share
 			}
 
 			sentShares[party] = share
@@ -154,18 +164,19 @@ func (p *Party) processInput(gateIdx int, gate *gate.Input) {
 
 		p.logger.Printf("%s sent shares %v", gatePrefix, sentShares)
 	} else {
-		for p.shares[gate.Party][gate] == nil {
+		// Receive shares from the specified party.
+		for p.shares[gate.Party][gateIdx] == nil {
 			msg := p.RecvShare()
-			p.shares[msg.party][p.circuit.Gate(msg.gate)] = &msg.share
+			p.shares[msg.party][msg.gate] = &msg.share
 
 			p.logger.Printf("%s received share %d from party %d", gatePrefix, msg.share, msg.party)
 		}
 	}
-	gate.SetOutput(*p.shares[gate.Party][gate])
+	gate.SetOutput(*p.shares[gate.Party][gateIdx])
 }
 
 func (p *Party) processAdd(gateIdx int, gate *gate.Add) {
-	gatePrefix := gatePrefix(gateIdx, gate)
+	gatePrefix := p.gatePrefix(gateIdx, gate.Type())
 	fst := gate.First().Output()
 	snd := gate.Second().Output()
 	prime := p.field.Prime
@@ -179,7 +190,7 @@ func (p *Party) processAdd(gateIdx int, gate *gate.Add) {
 
 func (p *Party) processMul(gateIdx int, gate *gate.Mul) {
 	// gatePrefix marks this gate in the logging output for readability.
-	gatePrefix := gatePrefix(gateIdx, gate)
+	gatePrefix := p.gatePrefix(gateIdx, gate.Type())
 	fst := gate.First().Output()
 	snd := gate.Second().Output()
 	prime := p.field.Prime
@@ -212,12 +223,12 @@ func (p *Party) processMul(gateIdx int, gate *gate.Mul) {
 	// recvShares are the shares for all parties for this gate. This variable is used for logging only.
 	recvShares := make([]int, nParties, nParties)
 	for party := 0; party < nParties; party++ {
-		for p.shares[party][gate] == nil {
+		for p.shares[party][gateIdx] == nil {
 			msg := p.RecvShare()
-			p.shares[msg.party][p.circuit.Gate(msg.gate)] = &msg.share
+			p.shares[msg.party][msg.gate] = &msg.share
 		}
 
-		recvShares[party] = *p.shares[party][gate]
+		recvShares[party] = *p.shares[party][gateIdx]
 	}
 	// At this point, all shares for this gate will have been received.
 	// i.e. p.shares[parties][gate] != nil for all parties.
@@ -230,7 +241,7 @@ func (p *Party) processMul(gateIdx int, gate *gate.Mul) {
 	// termStrings are the terms of the summation formatted as a string for debugging.
 	termsStrings := make([]string, nParties, nParties)
 	for party := 0; party < nParties; party++ {
-		share := *p.shares[party][gate]
+		share := *p.shares[party][gateIdx]
 		basis := poly.Recombination(party, nParties)
 		terms[party] = p.field.Mul(share, basis)
 
@@ -245,7 +256,7 @@ func (p *Party) processMul(gateIdx int, gate *gate.Mul) {
 }
 
 func (p *Party) processOutput(gateIdx int, gate gate.Gate) int {
-	gatePrefix := fmt.Sprintf("[%d | OUTPUT]", gateIdx)
+	gatePrefix := p.gatePrefix(gateIdx, "OUT")
 
 	nParties := p.circuit.NParties
 
@@ -268,7 +279,8 @@ func (p *Party) processOutput(gateIdx int, gate gate.Gate) int {
 			outputShares[msg.party] = &msg.share
 		}
 	}
-	// All elements of outputShares will be populated.
+
+	// Log the contents of outputShares.
 	outputSharesStrings := make([]string, nParties, nParties)
 	for party := 0; party < nParties; party++ {
 		outputSharesStrings[party] = fmt.Sprint(*outputShares[party])
@@ -290,12 +302,12 @@ func (p *Party) processOutput(gateIdx int, gate gate.Gate) int {
 	prime := p.field.Prime
 	summationString := strings.Join(termsStrings, " + ")
 	p.logger.Printf("%s %s mod %d = %d\n", gatePrefix, summationString, prime, output)
-	p.logger.Printf("%s output: %d\n", gatePrefix, output)
 
 	return output
 }
 
 // gatePrefix returns a formatted tag representing a gate e.g. [3 | MUL].
-func gatePrefix(gateIdx int, gate gate.Gate) string {
-	return fmt.Sprintf("[%d | %s]", gateIdx, gate.Type())
+func (p *Party) gatePrefix(gateIdx int, gate string) string {
+	indent := strings.Repeat(" ", p.logIndentLevel)
+	return fmt.Sprintf("  %s[%-2d| %-4s]", indent, gateIdx, gate)
 }

@@ -13,10 +13,19 @@ Run with
 go run cmd/mpc/mpc.go 
 ```
 
-Output can be sorted by party by running
+We recommend sorting the output for readability. To do this, run:
 
 ```sh
 go run cmd/mpc/mpc.go | sort
+```
+
+If the protocol finishes successfully, you should see that the program finishes with something like:
+
+```sh
+[...]
+MPC: 17:59:37.362092 Expected output: 7
+MPC: 17:59:37.362104 Actual output:   7
+MPC: 17:59:37.362112 Protocol succeeded (:
 ```
 
 The protocol can be configured using command line arguments. For example:
@@ -40,27 +49,81 @@ Usage of mpc:
 ```
 
 ## Details
+
+### Log Format
+
+Log lines for each party's computation follows the format:
+```sh
+00<PARTY_NUMBER>: <TIMESTAMP>  [<GATE_NUMBER> | <GATE_TYPE>] <LOG MESSAGE>
+``` 
+
+Gates are indented according to their level in the tree.
+
 ### Party Communication
 
-The main protocol is implemented in `party.Run`. It first traversed the circuit "tree" and processes each gate in turn. 
+The main protocol is implemented in `party.Run`. It first traverses the circuit "tree" and processes each gate in turn. 
 After computing the output of a gate, it's `Output` value is set so that other gates that depend on it can access its value. 
 The traversal is done in such a way that a gate's dependencies are always available. 
 
-Parties communicate with channels. Each party has a single `msg` channel, through which **all** inter-party communication 
+Parties communicate via their `msg` channel, through which *all* inter-party communication 
 is done. Each party is initialised with a copy of the circuit, to prevent any accidental shared memory.
 
-Parties are indexed from 0, although they are indexed from 1 for the purposed of calculations (e.g. computing the 
+Parties are indexed from 0, although they are indexed from 1 for the purpose of calculations (e.g. computing the 
 recombination vector).
 
 ### Circuit Definition
 
 Circuits are represented using the struct `circuit.Circuit`. They are defined using a tree-like structure, with
- `gate.Gate`s as nodes. See `pkg/config/config.go` for examples.
+ `gate.Gate`s as nodes. 
+ 
+```go
+&circuit.Circuit{
+    NParties: 6,
+    Root: gate.NewAdd(
+        gate.NewAdd(
+            gate.NewMul(
+                &gate.Input{Party: 0},
+                &gate.Input{Party: 1},
+                field,
+            ),
+            gate.NewMul(
+                &gate.Input{Party: 2},
+                &gate.Input{Party: 3},
+                field,
+            ),
+            field),
+        gate.NewMul(
+            &gate.Input{Party: 4},
+            &gate.Input{Party: 5},
+            field),
+        field,
+    ),
+}
+```
+
+Circuits that have multiple inputs into the circuit are supported. For example:
+
+```go
+&circuit.Circuit{
+    NParties: 2,
+    Root: gate.NewMul(
+        gate.NewMul(
+            &gate.Input{Party: 0},
+            &gate.Input{Party: 1},
+            field,
+        ),
+        &gate.Input{Party: 0},
+        field,
+    ),
+}
+``` 
+
+See `pkg/config/config.go` for the full list of hardcoded circuit configurations.
 
 ### Finite Field
 
-We chose not to use `big.Int` for simplicity. Instead, all modular arithmetic functions are implemented in package 
-`field`. 
+We chose not to use `big.Int` for simplicity, opting for the standard `int` type. Instead, all modular arithmetic functions are implemented in package 
+`field`. However, this does limit the size of input/prime that can be used.
 
 ## Authors
 * Joon-Ho Son `<js6317>`
