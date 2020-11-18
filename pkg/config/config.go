@@ -92,19 +92,15 @@ func config1(field field.Field) *Config {
 					gate.NewMul(
 						&gate.Input{Party: 0},
 						&gate.Input{Party: 1},
-						field,
 					),
 					gate.NewMul(
 						&gate.Input{Party: 2},
 						&gate.Input{Party: 3},
-						field,
 					),
-					field),
-				gate.NewMul(
+				), gate.NewMul(
 					&gate.Input{Party: 4},
 					&gate.Input{Party: 5},
-					field),
-				field,
+				),
 			),
 			NParties: 6,
 		},
@@ -117,13 +113,11 @@ func multree(nParties int, partyIdx int, field field.Field) gate.Gate {
 		return gate.NewMul(
 			&gate.Input{Party: partyIdx},
 			multree(nParties-1, partyIdx+1, field),
-			field,
 		)
 	}
 	left := gate.NewMul(
 		&gate.Input{Party: partyIdx},
 		&gate.Input{Party: partyIdx + 1},
-		field,
 	)
 	if nParties == 2 {
 		return left
@@ -131,7 +125,6 @@ func multree(nParties int, partyIdx int, field field.Field) gate.Gate {
 	return gate.NewMul(
 		left,
 		multree(nParties-2, partyIdx+2, field),
-		field,
 	)
 }
 
@@ -162,7 +155,6 @@ func config3(field field.Field) *Config {
 			Root: gate.NewAdd(
 				&gate.Input{Party: 0},
 				&gate.Input{Party: 1},
-				field,
 			),
 			NParties: 2,
 		},
@@ -180,9 +172,7 @@ func config4(field field.Field) *Config {
 				gate.NewAdd(
 					&gate.Input{Party: 1},
 					&gate.Input{Party: 2},
-					field,
 				),
-				field,
 			),
 			NParties: 3,
 		},
@@ -199,10 +189,8 @@ func config5(field field.Field) *Config {
 				gate.NewAdd(
 					&gate.Input{Party: 0},
 					&gate.Input{Party: 1},
-					field,
 				),
 				&gate.Input{Party: 2},
-				field,
 			),
 			NParties: 3,
 		},
@@ -219,11 +207,8 @@ func config6(field field.Field) *Config {
 				gate.NewMul(
 					&gate.Input{Party: 0},
 					&gate.Input{Party: 1},
-					field,
 				),
-				&gate.Input{Party: 2},
-				field,
-			),
+				&gate.Input{Party: 2}),
 			NParties: 3,
 		},
 	}
@@ -235,71 +220,52 @@ func config7(field field.Field) *Config {
 		Secrets: []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17},
 		Field:   field,
 		Circuit: &circuit.Circuit{
-			Root: gate.NewAdd(
-				&gate.Input{Party: 0},
+			Root: gate.NewAdd(&gate.Input{Party: 0}, gate.NewAdd(
+				&gate.Input{Party: 1},
 				gate.NewAdd(
-					&gate.Input{Party: 1},
+					&gate.Input{Party: 2},
 					gate.NewAdd(
-						&gate.Input{Party: 2},
+						&gate.Input{Party: 3},
 						gate.NewAdd(
-							&gate.Input{Party: 3},
+							&gate.Input{Party: 4},
 							gate.NewAdd(
-								&gate.Input{Party: 4},
+								&gate.Input{Party: 5},
 								gate.NewAdd(
-									&gate.Input{Party: 5},
+									&gate.Input{Party: 6},
 									gate.NewAdd(
-										&gate.Input{Party: 6},
+										&gate.Input{Party: 7},
 										gate.NewAdd(
-											&gate.Input{Party: 7},
+											&gate.Input{Party: 8},
 											gate.NewAdd(
-												&gate.Input{Party: 8},
+												&gate.Input{Party: 9},
 												gate.NewAdd(
-													&gate.Input{Party: 9},
+													&gate.Input{Party: 10},
 													gate.NewAdd(
-														&gate.Input{Party: 10},
+														&gate.Input{Party: 11},
 														gate.NewAdd(
-															&gate.Input{Party: 11},
+															&gate.Input{Party: 12},
 															gate.NewAdd(
-																&gate.Input{Party: 12},
+																&gate.Input{Party: 13},
 																gate.NewAdd(
-																	&gate.Input{Party: 13},
+																	&gate.Input{Party: 14},
 																	gate.NewAdd(
-																		&gate.Input{Party: 14},
-																		gate.NewAdd(
-																			&gate.Input{Party: 15},
-																			&gate.Input{Party: 16},
-																			field,
-																		),
-																		field,
+																		&gate.Input{Party: 15},
+																		&gate.Input{Party: 16},
 																	),
-																	field,
 																),
-																field,
 															),
-															field,
 														),
-														field,
 													),
-													field,
 												),
-												field,
 											),
-											field,
 										),
-										field,
 									),
-									field,
 								),
-								field,
 							),
-							field,
 						),
-						field,
 					),
-					field,
 				),
-				field,
-			),
+			)),
 			NParties: 17,
 		},
 	}
@@ -315,11 +281,8 @@ func config8(field field.Field) *Config {
 				gate.NewMul(
 					&gate.Input{Party: 0},
 					&gate.Input{Party: 1},
-					field,
 				),
-				&gate.Input{Party: 0},
-				field,
-			),
+				&gate.Input{Party: 0}),
 			NParties: 2,
 		},
 	}

@@ -27,19 +27,13 @@ func TestRunProtocol(t *testing.T) {
 						gate.NewMul(
 							&gate.Input{Party: 0},
 							&gate.Input{Party: 1},
-							fld,
 						),
 						gate.NewMul(
 							&gate.Input{Party: 2},
-							&gate.Input{Party: 3},
-							fld,
-						),
-						fld),
-					gate.NewMul(
+							&gate.Input{Party: 3}),
+					), gate.NewMul(
 						&gate.Input{Party: 4},
-						&gate.Input{Party: 5},
-						fld),
-					fld,
+						&gate.Input{Party: 5}),
 				),
 			},
 		},
@@ -52,25 +46,19 @@ func TestRunProtocol(t *testing.T) {
 			Field:   fld,
 			Circuit: &circuit.Circuit{
 				NParties: 6,
-				Root: gate.NewAdd(
+				Root: gate.NewAdd(gate.NewAdd(
 					gate.NewAdd(
-						gate.NewAdd(
-							&gate.Input{Party: 0},
-							&gate.Input{Party: 1},
-							fld,
-						),
-						gate.NewAdd(
-							&gate.Input{Party: 2},
-							&gate.Input{Party: 3},
-							fld,
-						),
-						fld),
+						&gate.Input{Party: 0},
+						&gate.Input{Party: 1},
+					),
 					gate.NewAdd(
-						&gate.Input{Party: 4},
-						&gate.Input{Party: 5},
-						fld),
-					fld,
-				),
+						&gate.Input{Party: 2},
+						&gate.Input{Party: 3},
+					),
+				), gate.NewAdd(
+					&gate.Input{Party: 4},
+					&gate.Input{Party: 5},
+				)),
 			},
 		},
 	}, {
@@ -81,25 +69,15 @@ func TestRunProtocol(t *testing.T) {
 			Field:   fld,
 			Circuit: &circuit.Circuit{
 				NParties: 2,
-				Root: gate.NewAdd(
-					gate.NewAdd(
-						gate.NewMul(
-							&gate.Input{Party: 0},
-							&gate.Input{Party: 1},
-							fld,
-						),
-						gate.NewAdd(
-							&gate.Input{Party: 1},
-							&gate.Input{Party: 0},
-							fld,
-						),
-						fld),
+				Root: gate.NewAdd(gate.NewAdd(
 					gate.NewMul(
 						&gate.Input{Party: 0},
+						&gate.Input{Party: 1}),
+					gate.NewAdd(
+						&gate.Input{Party: 1},
 						&gate.Input{Party: 0},
-						fld),
-					fld,
-				),
+					),
+				), gate.NewMul(&gate.Input{Party: 0}, &gate.Input{Party: 0})),
 			},
 		},
 	}}

@@ -78,26 +78,23 @@ Circuits are represented using the struct `circuit.Circuit`. They are defined us
  
 ```go
 &circuit.Circuit{
-    NParties: 6,
     Root: gate.NewAdd(
         gate.NewAdd(
             gate.NewMul(
                 &gate.Input{Party: 0},
                 &gate.Input{Party: 1},
-                field,
             ),
             gate.NewMul(
                 &gate.Input{Party: 2},
                 &gate.Input{Party: 3},
-                field,
             ),
-            field),
-        gate.NewMul(
+        ), gate.NewMul(
             &gate.Input{Party: 4},
             &gate.Input{Party: 5},
-            field),
-        field,
+        ),
     ),
+    NParties: 6,
+},
 }
 ```
 
@@ -110,10 +107,8 @@ Circuits that have multiple inputs into the circuit are supported. For example:
         gate.NewMul(
             &gate.Input{Party: 0},
             &gate.Input{Party: 1},
-            field,
         ),
         &gate.Input{Party: 0},
-        field,
     ),
 }
 ``` 
