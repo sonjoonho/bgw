@@ -9,8 +9,17 @@ type Mul struct {
 	// second is the second input to this gate.
 	second Gate
 	// field is the Field that we perform arithmetic over.
-	field  field.Field
+	field field.Field
+	// output is the output value of this gate.
 	output int
+}
+
+func NewMul(first Gate, second Gate, field field.Field) Gate {
+	return &Mul{
+		first:  first,
+		second: second,
+		field:  field,
+	}
 }
 
 func (g *Mul) First() Gate {
@@ -26,7 +35,11 @@ func (g *Mul) SetOutput(output int) {
 }
 
 func (g *Mul) Output() int {
-	return g.field.Mul(g.first.Output(), g.second.Output())
+	return g.output
+}
+
+func (g *Mul) Type() string {
+	return "MUL"
 }
 
 func (g *Mul) Copy() Gate {

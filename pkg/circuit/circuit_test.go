@@ -9,7 +9,7 @@ import (
 func TestCircuit_ComputeExpected(t *testing.T) {
 	secrets := []int{5, 28, 6}
 	// fld is not important for this function.
-	fld := field.New(0, 0)
+	fld := field.New(0)
 	circuit := &Circuit{
 		Root: gate.NewAdd(
 			&gate.Input{Party: 0},

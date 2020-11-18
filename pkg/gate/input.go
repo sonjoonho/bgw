@@ -1,5 +1,7 @@
 package gate
 
+import "fmt"
+
 // Input is an implicit party gate.
 type Input struct {
 	Party  int
@@ -20,6 +22,10 @@ func (g *Input) SetOutput(output int) {
 
 func (g *Input) Output() int {
 	return g.output
+}
+
+func (g *Input) Type() string {
+	return fmt.Sprintf("INPUT(%d)", g.Party)
 }
 
 func (g *Input) Copy() Gate {

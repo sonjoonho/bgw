@@ -14,8 +14,7 @@ type Field struct {
 	Prime int
 }
 
-func New(prime int, seed int64) Field {
-	rand.Seed(seed)
+func New(prime int) Field {
 	return Field{Prime: prime}
 }
 
