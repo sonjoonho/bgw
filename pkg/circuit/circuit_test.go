@@ -1,7 +1,6 @@
 package circuit
 
 import (
-	"gitlab.doc.ic.ac.uk/js6317/bgw/pkg/field"
 	"gitlab.doc.ic.ac.uk/js6317/bgw/pkg/gate"
 	"testing"
 )
@@ -9,17 +8,11 @@ import (
 func TestCircuit_ComputeExpected(t *testing.T) {
 	secrets := []int{5, 28, 6}
 	// fld is not important for this function.
-	fld := field.New(0)
 	circuit := &Circuit{
-		Root: gate.NewAdd(
-			&gate.Input{Party: 0},
-			gate.NewAdd(
-				&gate.Input{Party: 1},
-				&gate.Input{Party: 2},
-				fld,
-			),
-			fld,
-		),
+		Root: gate.NewAdd(&gate.Input{Party: 0}, gate.NewAdd(
+			&gate.Input{Party: 1},
+			&gate.Input{Party: 2},
+		)),
 	}
 
 	if got, want := circuit.ComputeExpected(secrets), 39; got != want {
