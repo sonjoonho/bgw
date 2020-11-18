@@ -41,8 +41,6 @@ func New(prime int, seed, defaultSeed int64, degree, defaultDegree, circuit int)
 	switch circuit {
 	case 1:
 		cfg = config1(fld)
-	case 2:
-		cfg = config2(fld)
 	case 3:
 		cfg = config3(fld)
 	case 4:
@@ -53,6 +51,8 @@ func New(prime int, seed, defaultSeed int64, degree, defaultDegree, circuit int)
 		cfg = config6(fld)
 	case 7:
 		cfg = config7(fld)
+	case 8:
+		cfg = config8(fld)
 	default:
 		logger.Fatalf("Unrecognised circuit number: %d", circuit)
 	}
@@ -71,86 +71,15 @@ func New(prime int, seed, defaultSeed int64, degree, defaultDegree, circuit int)
 
 	cfg.Degree = degree
 
-	if len(cfg.Secrets) != cfg.Circuit.NParties {
-		return nil, fmt.Errorf("length mismatch between number of secrets and number of parties")
+	if nSecrets, nParties := len(cfg.Secrets), cfg.Circuit.NParties; nSecrets != nParties {
+		return nil, fmt.Errorf("length mismatch between number of secrets (%d) and number of parties (%d)", nSecrets, nParties)
 	}
 
 	return cfg, nil
 }
-func config1(field field.Field) *Config {
-	return &Config{
-		Secrets: []int{5, 28},
-		Field:   field,
-		Circuit: &circuit.Circuit{
-			Root: gate.NewAdd(
-				&gate.Input{Party: 0},
-				&gate.Input{Party: 1},
-				field,
-			),
-			NParties: 2,
-		},
-	}
-}
-
-func config2(field field.Field) *Config {
-	return &Config{
-		Secrets: []int{5, 28, 6},
-		Field:   field,
-		Circuit: &circuit.Circuit{
-			Root: gate.NewAdd(
-				&gate.Input{Party: 0},
-				gate.NewAdd(
-					&gate.Input{Party: 1},
-					&gate.Input{Party: 2},
-					field,
-				),
-				field,
-			),
-			NParties: 3,
-		},
-	}
-}
-
-func config3(field field.Field) *Config {
-	return &Config{
-		Secrets: []int{10, 20, 30},
-		Field:   field,
-		Circuit: &circuit.Circuit{
-			Root: gate.NewMul(
-				gate.NewAdd(
-					&gate.Input{Party: 0},
-					&gate.Input{Party: 1},
-					field,
-				),
-				&gate.Input{Party: 2},
-				field,
-			),
-			NParties: 3,
-		},
-	}
-}
-
-func config4(field field.Field) *Config {
-	return &Config{
-		Secrets: []int{1, 2, 3},
-		Field:   field,
-		Circuit: &circuit.Circuit{
-			Root: gate.NewMul(
-				gate.NewMul(
-					&gate.Input{Party: 0},
-					&gate.Input{Party: 1},
-					field,
-				),
-				&gate.Input{Party: 2},
-				field,
-			),
-			NParties: 3,
-		},
-	}
-}
 
 // This is the example from Smart (p. 445).
-func config5(field field.Field) *Config {
+func config1(field field.Field) *Config {
 	return &Config{
 		Secrets: []int{20, 40, 21, 31, 1, 71},
 		Field:   field,
@@ -179,37 +108,162 @@ func config5(field field.Field) *Config {
 	}
 }
 
-// Lots of additions.
-func config6(field field.Field) *Config {
+// TODO(willburr): Circuit 2.
+
+// A single add gate.
+func config3(field field.Field) *Config {
 	return &Config{
-		Secrets: []int{1, 2, 3, 4, 5, 6},
+		Secrets: []int{5, 28},
 		Field:   field,
 		Circuit: &circuit.Circuit{
 			Root: gate.NewAdd(
-				gate.NewAdd(
-					gate.NewAdd(
-						&gate.Input{Party: 0},
-						&gate.Input{Party: 1},
-						field,
-					),
-					gate.NewAdd(
-						&gate.Input{Party: 2},
-						&gate.Input{Party: 3},
-						field,
-					),
-					field),
-				gate.NewAdd(
-					&gate.Input{Party: 4},
-					&gate.Input{Party: 5},
-					field),
+				&gate.Input{Party: 0},
+				&gate.Input{Party: 1},
 				field,
 			),
-			NParties: 6,
+			NParties: 2,
 		},
 	}
 }
 
+// Two add gates.
+func config4(field field.Field) *Config {
+	return &Config{
+		Secrets: []int{5, 28, 6},
+		Field:   field,
+		Circuit: &circuit.Circuit{
+			Root: gate.NewAdd(
+				&gate.Input{Party: 0},
+				gate.NewAdd(
+					&gate.Input{Party: 1},
+					&gate.Input{Party: 2},
+					field,
+				),
+				field,
+			),
+			NParties: 3,
+		},
+	}
+}
+
+// An add gate and multiplication gate.
+func config5(field field.Field) *Config {
+	return &Config{
+		Secrets: []int{10, 20, 30},
+		Field:   field,
+		Circuit: &circuit.Circuit{
+			Root: gate.NewMul(
+				gate.NewAdd(
+					&gate.Input{Party: 0},
+					&gate.Input{Party: 1},
+					field,
+				),
+				&gate.Input{Party: 2},
+				field,
+			),
+			NParties: 3,
+		},
+	}
+}
+
+// Two multiplication gates.
+func config6(field field.Field) *Config {
+	return &Config{
+		Secrets: []int{1, 2, 3},
+		Field:   field,
+		Circuit: &circuit.Circuit{
+			Root: gate.NewMul(
+				gate.NewMul(
+					&gate.Input{Party: 0},
+					&gate.Input{Party: 1},
+					field,
+				),
+				&gate.Input{Party: 2},
+				field,
+			),
+			NParties: 3,
+		},
+	}
+}
+
+// Many addition gates.
 func config7(field field.Field) *Config {
+	return &Config{
+		Secrets: []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17},
+		Field:   field,
+		Circuit: &circuit.Circuit{
+			Root: gate.NewAdd(
+				&gate.Input{Party: 0},
+				gate.NewAdd(
+					&gate.Input{Party: 1},
+					gate.NewAdd(
+						&gate.Input{Party: 2},
+						gate.NewAdd(
+							&gate.Input{Party: 3},
+							gate.NewAdd(
+								&gate.Input{Party: 4},
+								gate.NewAdd(
+									&gate.Input{Party: 5},
+									gate.NewAdd(
+										&gate.Input{Party: 6},
+										gate.NewAdd(
+											&gate.Input{Party: 7},
+											gate.NewAdd(
+												&gate.Input{Party: 8},
+												gate.NewAdd(
+													&gate.Input{Party: 9},
+													gate.NewAdd(
+														&gate.Input{Party: 10},
+														gate.NewAdd(
+															&gate.Input{Party: 11},
+															gate.NewAdd(
+																&gate.Input{Party: 12},
+																gate.NewAdd(
+																	&gate.Input{Party: 13},
+																	gate.NewAdd(
+																		&gate.Input{Party: 14},
+																		gate.NewAdd(
+																			&gate.Input{Party: 15},
+																			&gate.Input{Party: 16},
+																			field,
+																		),
+																		field,
+																	),
+																	field,
+																),
+																field,
+															),
+															field,
+														),
+														field,
+													),
+													field,
+												),
+												field,
+											),
+											field,
+										),
+										field,
+									),
+									field,
+								),
+								field,
+							),
+							field,
+						),
+						field,
+					),
+					field,
+				),
+				field,
+			),
+			NParties: 17,
+		},
+	}
+}
+
+// Party 0 has two inputs into the circuit.
+func config8(field field.Field) *Config {
 	return &Config{
 		Secrets: []int{1, 2},
 		Field:   field,
