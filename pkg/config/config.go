@@ -7,6 +7,7 @@ import (
 	"gitlab.doc.ic.ac.uk/js6317/bgw/pkg/field"
 	"gitlab.doc.ic.ac.uk/js6317/bgw/pkg/gate"
 	"log"
+	"math"
 	"math/rand"
 	"os"
 	"time"
@@ -41,6 +42,8 @@ func New(prime int, seed, defaultSeed int64, degree, defaultDegree, circuit int)
 	switch circuit {
 	case 1:
 		cfg = config1(fld)
+	case 2:
+		cfg = config2(fld)
 	case 3:
 		cfg = config3(fld)
 	case 4:
@@ -108,7 +111,47 @@ func config1(field field.Field) *Config {
 	}
 }
 
-// TODO(willburr): Circuit 2.
+// multree creates the gates for a multiplication of every party's input and returns the root gate.
+func multree(nParties int, partyIdx int, field field.Field) gate.Gate {
+	if nParties%2 == 1 {
+		return gate.NewMul(
+			&gate.Input{Party: partyIdx},
+			multree(nParties-1, partyIdx+1, field),
+			field,
+		)
+	}
+	left := gate.NewMul(
+		&gate.Input{Party: partyIdx},
+		&gate.Input{Party: partyIdx + 1},
+		field,
+	)
+	if nParties == 2 {
+		return left
+	}
+	return gate.NewMul(
+		left,
+		multree(nParties-2, partyIdx+2, field),
+		field,
+	)
+}
+
+func config2(field field.Field) *Config {
+	nParties := int(math.Pow(2, 3))
+	root := multree(nParties, 0, field)
+
+	secrets := make([]int, nParties)
+	for i := 0; i < nParties; i++ {
+		secrets[i] = i + 1
+	}
+	return &Config{
+		Secrets: secrets,
+		Field:   field,
+		Circuit: &circuit.Circuit{
+			Root:     root,
+			NParties: nParties,
+		},
+	}
+}
 
 // A single add gate.
 func config3(field field.Field) *Config {
