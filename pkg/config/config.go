@@ -58,6 +58,8 @@ func New(prime int, seed, defaultSeed int64, degree, defaultDegree, circuit int)
 		cfg = config8(fld)
 	case 9:
 		cfg = config9(fld)
+	case 10:
+		cfg = config10(fld)
 	default:
 		logger.Fatalf("Unrecognised circuit number: %d", circuit)
 	}
@@ -148,6 +150,7 @@ func config2(field field.Field) *Config {
 	}
 }
 
+// Fibonacci sequence.
 func config3(field field.Field) *Config {
 	n := 10
 	return &Config{
@@ -307,6 +310,63 @@ func config9(field field.Field) *Config {
 				),
 				&gate.Input{Party: 0}),
 			NParties: 2,
+		},
+	}
+}
+
+// Many multiplication gates.
+func config10(field field.Field) *Config {
+	return &Config{
+		Secrets: []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17},
+		Field:   field,
+		Circuit: &circuit.Circuit{
+			Root: gate.NewMul(&gate.Input{Party: 0}, gate.NewMul(
+				&gate.Input{Party: 1},
+				gate.NewMul(
+					&gate.Input{Party: 2},
+					gate.NewMul(
+						&gate.Input{Party: 3},
+						gate.NewMul(
+							&gate.Input{Party: 4},
+							gate.NewMul(
+								&gate.Input{Party: 5},
+								gate.NewMul(
+									&gate.Input{Party: 6},
+									gate.NewMul(
+										&gate.Input{Party: 7},
+										gate.NewMul(
+											&gate.Input{Party: 8},
+											gate.NewMul(
+												&gate.Input{Party: 9},
+												gate.NewMul(
+													&gate.Input{Party: 10},
+													gate.NewMul(
+														&gate.Input{Party: 11},
+														gate.NewMul(
+															&gate.Input{Party: 12},
+															gate.NewMul(
+																&gate.Input{Party: 13},
+																gate.NewMul(
+																	&gate.Input{Party: 14},
+																	gate.NewMul(
+																		&gate.Input{Party: 15},
+																		&gate.Input{Party: 16},
+																	),
+																),
+															),
+														),
+													),
+												),
+											),
+										),
+									),
+								),
+							),
+						),
+					),
+				),
+			)),
+			NParties: 17,
 		},
 	}
 }

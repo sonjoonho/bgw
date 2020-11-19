@@ -57,7 +57,7 @@ func New(id int, secret int, circuit *circuit.Circuit, field field.Field, degree
 		secret:  secret,
 		circuit: circuit,
 		field:   field,
-		ch:      make(chan *message, nParties+1),
+		ch:      make(chan *message, nParties*nParties),
 		subs:    make([]chan<- *message, nParties, nParties),
 		shares:  make([]map[int]*int, nParties, nParties),
 		degree:  degree,
@@ -220,20 +220,16 @@ func (p *Party) processMul(gateIdx int, gate *gate.Mul) {
 
 	p.logger.Printf("%s sent shares %v", gatePrefix, sentShares)
 
-	// recvShares are the shares for all parties for this gate. This variable is used for logging only.
-	recvShares := make([]int, nParties, nParties)
 	for party := 0; party < nParties; party++ {
 		for p.shares[party][gateIdx] == nil {
 			msg := p.RecvShare()
 			p.shares[msg.party][msg.gate] = &msg.share
 		}
-
-		recvShares[party] = *p.shares[party][gateIdx]
 	}
 	// At this point, all shares for this gate will have been received.
 	// i.e. p.shares[parties][gate] != nil for all parties.
 
-	p.logger.Printf("%s received shares %v", gatePrefix, recvShares)
+	p.logger.Printf("%s received shares %v", gatePrefix, p.formatSharesForGate(gateIdx))
 
 	// Each party j computes c^j.
 	terms := make([]int, nParties, nParties)
@@ -272,26 +268,19 @@ func (p *Party) processOutput(gateIdx int, gate gate.Gate) int {
 
 	p.logger.Printf("%s sent shares %v", gatePrefix, sentShares)
 
-	outputShares := make([]*int, nParties, nParties)
 	for party := 0; party < nParties; party++ {
-		for outputShares[party] == nil {
+		for p.shares[party][gateIdx+1] == nil {
 			msg := p.RecvShare()
-			outputShares[msg.party] = &msg.share
+			p.shares[msg.party][msg.gate] = &msg.share
 		}
 	}
 
-	// Log the contents of outputShares.
-	outputSharesStrings := make([]string, nParties, nParties)
-	for party := 0; party < nParties; party++ {
-		outputSharesStrings[party] = fmt.Sprint(*outputShares[party])
-	}
-	outputSharesString := "[" + strings.Join(outputSharesStrings, " ") + "]"
-	p.logger.Printf("%s received shares %v", gatePrefix, outputSharesString)
+	p.logger.Printf("%s received shares %v", gatePrefix, p.formatSharesForGate(gateIdx+1))
 
 	terms := make([]int, nParties, nParties)
 	termsStrings := make([]string, nParties, nParties)
 	for party := 0; party < nParties; party++ {
-		share := *outputShares[party]
+		share := *p.shares[party][gateIdx+1]
 		basis := poly.Recombination(party, nParties)
 		terms[party] = p.field.Mul(basis, share)
 
@@ -310,4 +299,14 @@ func (p *Party) processOutput(gateIdx int, gate gate.Gate) int {
 func (p *Party) gatePrefix(gateIdx int, gate string) string {
 	indent := strings.Repeat(" ", p.logIndentLevel)
 	return fmt.Sprintf("  %s[%-2d| %-4s]", indent, gateIdx, gate)
+}
+
+// formatSharesForGate returns the shares for a particular gate across all parties formatted as a string.
+func (p *Party) formatSharesForGate(gateIdx int) string {
+	nParties := p.circuit.NParties
+	shareStrings := make([]string, nParties, nParties)
+	for party := 0; party < nParties; party++ {
+		shareStrings[party] = fmt.Sprint(*p.shares[party][gateIdx])
+	}
+	return "[" + strings.Join(shareStrings, " ") + "]"
 }
