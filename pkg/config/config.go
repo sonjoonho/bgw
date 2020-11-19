@@ -56,6 +56,8 @@ func New(prime int, seed, defaultSeed int64, degree, defaultDegree, circuit int)
 		cfg = config7(fld)
 	case 8:
 		cfg = config8(fld)
+	case 9:
+		cfg = config9(fld)
 	default:
 		logger.Fatalf("Unrecognised circuit number: %d", circuit)
 	}
@@ -146,8 +148,29 @@ func config2(field field.Field) *Config {
 	}
 }
 
-// A single add gate.
 func config3(field field.Field) *Config {
+	n := 10
+	return &Config{
+		Secrets: []int{0, 1},
+		Field:   field,
+		Circuit: &circuit.Circuit{
+			Root:     fibonacci(n),
+			NParties: 2,
+		},
+	}
+}
+
+// fibonacci creates the gates for computing the nth fibonacci number and returns the root gate.
+func fibonacci(n int) gate.Gate {
+	fibGates := []gate.Gate{&gate.Input{Party: 0}, &gate.Input{Party: 1}}
+	for k := 2; k <= n; k++ {
+		fibGates = append(fibGates, gate.NewAdd(fibGates[len(fibGates)-1], fibGates[len(fibGates)-2]))
+	}
+	return fibGates[len(fibGates)-1]
+}
+
+// A single add gate.
+func config4(field field.Field) *Config {
 	return &Config{
 		Secrets: []int{5, 28},
 		Field:   field,
@@ -162,7 +185,7 @@ func config3(field field.Field) *Config {
 }
 
 // Two add gates.
-func config4(field field.Field) *Config {
+func config5(field field.Field) *Config {
 	return &Config{
 		Secrets: []int{5, 28, 6},
 		Field:   field,
@@ -180,7 +203,7 @@ func config4(field field.Field) *Config {
 }
 
 // An add gate and multiplication gate.
-func config5(field field.Field) *Config {
+func config6(field field.Field) *Config {
 	return &Config{
 		Secrets: []int{10, 20, 30},
 		Field:   field,
@@ -198,7 +221,7 @@ func config5(field field.Field) *Config {
 }
 
 // Two multiplication gates.
-func config6(field field.Field) *Config {
+func config7(field field.Field) *Config {
 	return &Config{
 		Secrets: []int{1, 2, 3},
 		Field:   field,
@@ -215,7 +238,7 @@ func config6(field field.Field) *Config {
 }
 
 // Many addition gates.
-func config7(field field.Field) *Config {
+func config8(field field.Field) *Config {
 	return &Config{
 		Secrets: []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17},
 		Field:   field,
@@ -272,7 +295,7 @@ func config7(field field.Field) *Config {
 }
 
 // Party 0 has two inputs into the circuit.
-func config8(field field.Field) *Config {
+func config9(field field.Field) *Config {
 	return &Config{
 		Secrets: []int{1, 2},
 		Field:   field,
