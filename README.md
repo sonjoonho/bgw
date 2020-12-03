@@ -1,7 +1,5 @@
-# Privacy Engineering Coursework
+# BGW
 Implementation of the BGW MPC protocol in Go.
-
-[![Pipeline status](https://gitlab.doc.ic.ac.uk/js6317/bgw/badges/master/pipeline.svg)](https://gitlab.doc.ic.ac.uk/js6317/bgw/)
 
 ## Getting Started
 
