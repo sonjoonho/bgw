@@ -4,8 +4,8 @@ package main
 import (
 	"flag"
 	"fmt"
-	"gitlab.doc.ic.ac.uk/js6317/bgw/pkg/config"
-	"gitlab.doc.ic.ac.uk/js6317/bgw/pkg/party"
+	"github.com/sonjoonho/bgw/pkg/config"
+	"github.com/sonjoonho/bgw/pkg/party"
 	"log"
 	"os"
 	"sync"

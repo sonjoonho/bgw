@@ -2,7 +2,7 @@
 package circuit
 
 import (
-	"gitlab.doc.ic.ac.uk/js6317/bgw/pkg/gate"
+	"github.com/sonjoonho/bgw/pkg/gate"
 )
 
 // Circuit represents an arithmetic circuit to be computed by parties. It is not thread safe -- each Goroutine should be

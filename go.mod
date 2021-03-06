@@ -1,3 +1,3 @@
-module gitlab.doc.ic.ac.uk/js6317/bgw
+module github.com/sonjoonho/bgw
 
 go 1.15

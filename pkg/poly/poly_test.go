@@ -1,7 +1,7 @@
 package poly
 
 import (
-	"gitlab.doc.ic.ac.uk/js6317/bgw/pkg/field"
+	"github.com/sonjoonho/bgw/pkg/field"
 	"testing"
 )
 

@@ -1,10 +1,10 @@
 package main
 
 import (
-	"gitlab.doc.ic.ac.uk/js6317/bgw/pkg/circuit"
-	"gitlab.doc.ic.ac.uk/js6317/bgw/pkg/config"
-	"gitlab.doc.ic.ac.uk/js6317/bgw/pkg/field"
-	"gitlab.doc.ic.ac.uk/js6317/bgw/pkg/gate"
+	"github.com/sonjoonho/bgw/pkg/circuit"
+	"github.com/sonjoonho/bgw/pkg/config"
+	"github.com/sonjoonho/bgw/pkg/field"
+	"github.com/sonjoonho/bgw/pkg/gate"
 	"testing"
 )
 

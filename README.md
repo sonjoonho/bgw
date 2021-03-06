@@ -1,10 +1,8 @@
 # BGW
-Implementation of the BGW MPC protocol in Go.
+
+Implementation of the BGW protocol for secure multi-party computation in Go.
 
 ## Getting Started
-
-On a CSG machines, Go 1.15 is available at `/vol/linux/apps/go/bin/go`. If, for some reason, this doesn't work then Go
- 1.14.3 should be installed at `/usr/lib/go-1.14/bin/go`. Below we will assume the `go` binary is on your path already. 
 
 Run with 
 ```sh
@@ -116,7 +114,7 @@ See `pkg/config/config.go` for the full list of hardcoded circuit configurations
 ### Finite Field
 
 We chose not to use `big.Int` for simplicity, opting for the standard `int` type. Instead, all modular arithmetic functions are implemented in package 
-`field`. However, this does limit the size of input/prime that can be used.
+`field`. However, this does limit the size of input/prime that can be used. A more robust solution should use `big.Int`.
 
 ## Authors
 * Joon-Ho Son `<js6317>`

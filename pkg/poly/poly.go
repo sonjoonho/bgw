@@ -3,7 +3,7 @@ package poly
 
 import (
 	"fmt"
-	"gitlab.doc.ic.ac.uk/js6317/bgw/pkg/field"
+	"github.com/sonjoonho/bgw/pkg/field"
 	"math"
 	"strings"
 )

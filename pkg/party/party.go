@@ -3,10 +3,10 @@ package party
 
 import (
 	"fmt"
-	"gitlab.doc.ic.ac.uk/js6317/bgw/pkg/circuit"
-	"gitlab.doc.ic.ac.uk/js6317/bgw/pkg/field"
-	"gitlab.doc.ic.ac.uk/js6317/bgw/pkg/gate"
-	"gitlab.doc.ic.ac.uk/js6317/bgw/pkg/poly"
+	"github.com/sonjoonho/bgw/pkg/circuit"
+	"github.com/sonjoonho/bgw/pkg/field"
+	"github.com/sonjoonho/bgw/pkg/gate"
+	"github.com/sonjoonho/bgw/pkg/poly"
 	"log"
 	"os"
 	"strings"
